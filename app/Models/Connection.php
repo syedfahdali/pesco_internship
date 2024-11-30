@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -8,9 +9,7 @@ class Connection extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'survey_id', 'type_of_connection', 'quantity', 'load_kva',
-    ];
+    protected $fillable = ['survey_id', 'type', 'quantity', 'load_kva'];
 
     public function survey()
     {

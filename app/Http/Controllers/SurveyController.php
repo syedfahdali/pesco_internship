@@ -3,164 +3,102 @@
 namespace App\Http\Controllers;
 
 use App\Models\Survey;
-use App\Models\HTLine;
-use App\Models\DistributionTransformer;
-use App\Models\Connection;
-use App\Models\Pole;
 use Illuminate\Http\Request;
 
 class SurveyController extends Controller
 {
     /**
-     * 
-
-     * Show the form for creating a new survey.
+     * Display a listing of the resource.
      */
-    public function create()
+    public function index(Request $request)
     {
-        return view('survey.create'); // Ensure the view file exists in resources/views/survey/create.blade.php
+        $search = $request->input('search');
+
+        // Fetch surveys with search and paginate
+        $surveys = Survey::when($search, function ($query, $search) {
+                return $query->where('circle', 'like', "%$search%")
+                    ->orWhere('division', 'like', "%$search%")
+                    ->orWhere('work_order', 'like', "%$search%");
+            })
+            ->paginate(10)
+            ->withQueryString(); // Keep search query in pagination links
+
+        return view('surveys.index', compact('surveys'));
     }
 
     /**
-     * Store a newly created survey in storage.
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return view('surveys.create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
-{
-    // Validate the form data
-    // $validated = $request->validate([
-    //     'circle' => 'required|string|max:255',
-    //         'division' => 'required|string|max:255',
-    //         'sub_division' => 'required|string|max:255',
-    //         'grid' => 'required|string|max:255',
-    //         'feeder' => 'required|string|max:255',
-    //         'distribution_system' => 'required|string|max:255',
-    //         'entry_type' => 'required|string|max:255',
-    //         'date_completion' => 'required|date',
-    //         'work_order' => 'required|string|max:255',
-    //         'head' => 'required|string|max:255',
-    //         'sanctioned_by' => 'required|string|max:255',
-    //         'vide_letter_no' => 'required|string|max:255',
-    //         'survey_date' => 'required|date',
-    // ]);
-    $validated = $request->validate([
-        'circle' => 'required|string|max:255',
-        'division' => 'required|string|max:255',
-        'sub_division' => 'required|string|max:255',
-        'grid' => 'required|string|max:255',
-        'feeder' => 'required|string|max:255',
-        'distribution_system' => 'required|string|max:255',
-        'entry_type' => 'required|string|max:255',
-        'conductor_name' => 'required|string|max:255',
-        'length_in_kms' => 'required|numeric',
-        'transformer_capacity' => 'required|numeric',
-        'quantity' => 'required|numeric',
-        'location_coordinates' => 'required|string',
-        'category' => 'required|string',  
-        'connection_type' => 'required|string|max:255',
-        'connection_quantity' => 'required|numeric',
-        'connection_load' => 'required|numeric',
-        'pole_type' => 'required|string|max:255',
-        'pole_quantity' => 'required|numeric',
-        'date_completion' => 'required|date',
-        'work_order' => 'required|string|max:255',
-        'head' => 'required|string|max:255',
-        'sanctioned_by' => 'required|string|max:255',
-        'vide_letter_no' => 'required|string|max:255',
-        'survey_date' => 'required|date',
-        // Adjust validation based on coordinate format
-        
-        
-        
-    ]);
+    {
+        // Validate incoming request
+        $validated = $request->validate([
+            'circle' => 'required|string|max:255',
+            'division' => 'required|string|max:255',
+            'sub_division' => 'nullable|string|max:255',
+            'work_order' => 'required|string|max:255',
+            'completion_date' => 'required|date',
+            'survey_date' => 'required|date',
+        ]);
 
-    // Create the survey record
-    $survey = Survey::create($validated);
+        // Create new survey
+        Survey::create($validated);
 
-    // Save HT lines, transformers, connections, and poles using relationships
-    foreach ($request->ht_lines as $line) {
-        $survey->htLines()->create($line);
+        return redirect()->route('surveys.index')->with('success', 'Survey created successfully.');
     }
 
-    foreach ($request->transformers as $transformer) {
-        $survey->transformers()->create($transformer);
+    /**
+     * Display the specified resource.
+     */
+    public function show(Survey $survey)
+    {
+        return view('surveys.show', compact('survey'));
     }
 
-    foreach ($request->connections as $connection) {
-        $survey->connections()->create($connection);
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Survey $survey)
+    {
+        return view('surveys.edit', compact('survey'));
     }
 
-    foreach ($request->poles as $pole) {
-        $survey->poles()->create($pole);
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Survey $survey)
+    {
+        // Validate incoming request
+        $validated = $request->validate([
+            'circle' => 'required|string|max:255',
+            'division' => 'required|string|max:255',
+            'sub_division' => 'nullable|string|max:255',
+            'work_order' => 'required|string|max:255',
+            'completion_date' => 'required|date',
+            'survey_date' => 'required|date',
+        ]);
+
+        // Update survey
+        $survey->update($validated);
+
+        return redirect()->route('surveys.index')->with('success', 'Survey updated successfully.');
     }
-    Survey::create($request->all());
-    return redirect()->route('survey.index')->with('success', 'Survey submitted successfully!');
-}
 
-    // public function store(Request $request)
-    // {
-    //     // dd($request->all());
-    //     // Validate the incoming form data
-    //     $validated = $request->validate([
-    //         'circle' => 'required|string|max:255',
-    //         'division' => 'required|string|max:255',
-    //         'sub_division' => 'required|string|max:255',
-    //         'grid' => 'required|string|max:255',
-    //         'feeder' => 'required|string|max:255',
-    //         'distribution_system' => 'required|string|max:255',
-    //         'entry_type' => 'required|string|max:255',
-    //         'date_completion' => 'required|date',
-    //         'work_order' => 'required|string|max:255',
-    //         'head' => 'required|string|max:255',
-    //         'sanctioned_by' => 'required|string|max:255',
-    //         'vide_letter_no' => 'required|string|max:255',
-    //         'survey_date' => 'required|date',
-    //     ]);
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Survey $survey)
+    {
+        $survey->delete();
 
-    //     // Create a new Survey record
-    //     $survey = Survey::create($validated);
-
-    //     // Save HT Lines
-    //     if ($request->has('ht_lines')) {
-    //         foreach ($request->input('ht_lines') as $line) {
-    //             $survey->htLines()->create($line);
-    //         }
-    //     }
-
-    //     // Save Distribution Transformers
-    //     if ($request->has('transformers')) {
-    //         foreach ($request->input('transformers') as $transformer) {
-    //             $survey->transformers()->create($transformer);
-    //         }
-    //     }
-
-    //     // Save Connections
-    //     if ($request->has('connections')) {
-    //         foreach ($request->input('connections') as $connection) {
-    //             $survey->connections()->create($connection);
-    //         }
-    //     }
-
-    //     // Save Poles
-    //     if ($request->has('poles')) {
-    //         foreach ($request->input('poles') as $pole) {
-    //             $survey->poles()->create($pole);
-    //         }
-    //     }
-
-    //     // Redirect back with a success message
-    //     return redirect()->back()->with('success', 'Survey submitted successfully!');
-    // }
-    // public function index()
-    // {
-    //     // Fetch all surveys from the database
-    //     $surveys = Survey::all();
-        
-    //     // Return the 'survey.index' view with surveys data
-    //     return view('survey.index', compact('surveys'));
-    // }
-    public function index() {
-        $surveys = Survey::all(); 
-        return view('survey.index', compact('surveys'));
+        return redirect()->route('surveys.index')->with('success', 'Survey deleted successfully.');
     }
 }
-
