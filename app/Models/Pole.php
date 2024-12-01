@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -8,9 +9,7 @@ class Pole extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'survey_id', 'type_of_pole', 'quantity',
-    ];
+    protected $fillable = ['survey_id', 'type', 'quantity'];
 
     public function survey()
     {
